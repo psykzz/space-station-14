@@ -12,10 +12,7 @@ build:
   parallel: true
   verbosity: minimal
 
-install:
-- cinst python
-
 after_build:
-- cmd: py -3 Resources\buildResourcePack.py --resources-dir .\Resources --out .\Resources\ResourcePack.zip --sprite-renderer .\Resources\SpriteRenderer\MSpriteRenderer.exe --atlas-tool .\Tools\AtlasTool.exe
+- cmd: py -3.5 Resources\buildResourcePack.py --resources-dir .\Resources --out .\Resources\ResourcePack.zip --sprite-renderer .\Resources\SpriteRenderer\MSpriteRenderer.exe --atlas-tool .\Tools\AtlasTool.exe
 
 test: off
