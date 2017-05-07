@@ -924,7 +924,7 @@ namespace SS14.Client.Services.State.States
         {
             NetOutgoingMessage message = NetworkManager.CreateMessage();
             message.Write((byte)NetMessage.ChatMessage);
-            message.Write((byte)ChatChannel.Player);
+            message.Write((byte)ChatChannel.Direct);
             message.Write(text);
             NetworkManager.SendMessage(message, NetDeliveryMethod.ReliableUnordered);
         }

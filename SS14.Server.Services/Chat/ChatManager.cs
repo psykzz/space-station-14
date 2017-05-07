@@ -71,7 +71,7 @@ namespace SS14.Server.Services.Chat
                 case ChatChannel.Server:
                 case ChatChannel.OOC:
                 case ChatChannel.Radio:
-                case ChatChannel.Player:
+                case ChatChannel.Direct:
                 case ChatChannel.Default:
                     IoCManager.Resolve<ISS14NetServer>().SendToAll(message);
                     break;

@@ -89,7 +89,7 @@ namespace SS14.Client.Services.UserInterface.Components
                 [ChatChannel.Damage] = Color.Red,
                 [ChatChannel.Radio] = new SFML.Graphics.Color(0, 100, 0),
                 [ChatChannel.Server] = Color.Blue,
-                [ChatChannel.Player] = new SFML.Graphics.Color(0, 128, 0),
+                [ChatChannel.Direct] = new SFML.Graphics.Color(0, 128, 0),
                 [ChatChannel.Lobby] = Color.White,
                 [ChatChannel.Ingame] = new SFML.Graphics.Color(0, 200, 0),
                 [ChatChannel.OOC] = Color.White,

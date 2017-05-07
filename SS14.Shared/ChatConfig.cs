@@ -25,7 +25,7 @@
         /// <summary>
         /// Messages that are sent by the player directly
         /// </summary>
-        Player, 
+        Direct, 
         /// <summary>
         /// Radio messages
         /// </summary>
