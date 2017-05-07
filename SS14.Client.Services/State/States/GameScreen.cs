@@ -278,7 +278,7 @@ namespace SS14.Client.Services.State.States
         {
             _gameChat.Position = new Vector2i((int)CluwneLib.Screen.Size.X - _gameChatSize.X - 10, 10);
 
-            _statusBar.Position = new Vector2i((int)CluwneLib.Screen.Size.X / 2, 400);
+            _statusBar.Position = new Vector2i(10, 10);
 
             _hotbar.Position = new Vector2i(0, (int)CluwneLib.Screen.Size.Y - _hotbar.ClientArea.Height - 5);
 
@@ -309,7 +309,7 @@ namespace SS14.Client.Services.State.States
             //UserInterfaceManager.AddComponent(new StatPanelComponent(ConfigurationManager.GetPlayerName(), PlayerManager, NetworkManager, ResourceManager));
 
             _statusBar = new StatusEffectBar(ResourceManager, PlayerManager);
-            _statusBar.Position = new Vector2i((int)CluwneLib.Screen.Size.X /2, 400);
+            _statusBar.Position = new Vector2i(10, 10);
             UserInterfaceManager.AddComponent(_statusBar);
 
             _hotbar = new Hotbar(ResourceManager);

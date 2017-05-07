@@ -68,7 +68,7 @@ namespace SS14.Client.Services.UserInterface.Components
         {
             if (assignedEnt != null)
             {
-                if (assignedEnt.Uid != _playerManager.ControlledEntity.Uid) //Seems like the controled ent changed.
+                if (assignedEnt.Uid != _playerManager.ControlledEntity.Uid) //Seems like the controlled ent changed.
                 {
                     assigned.Changed -= assigned_Changed;
                     assigned = null;
@@ -129,12 +129,11 @@ namespace SS14.Client.Services.UserInterface.Components
 
         public override void Render()
         {
-            if (buttons.Count > 0)
+            if (buttons.Count == 0)
+                return;
+
             CluwneLib.drawRectangle(ClientArea.Left, ClientArea.Top, ClientArea.Width, ClientArea.Height,
                                                      new SFML.Graphics.Color(105, 105, 105));
-
-            CluwneLib.drawCircle(Position.X, Position.Y, 3, Color.White);
-            CluwneLib.drawCircle(Position.X, Position.Y, 2, new SFML.Graphics.Color(128, 128, 128));
 
             foreach (StatusEffectButton button in buttons)
                 button.Render();
