@@ -10,8 +10,11 @@ using System;
 
 namespace SS14.Client.GameObjects.EntitySystems
 {
+
     internal class TransformSystem : EntitySystem
     {
+        new private float updateFrequency = 0.1f;
+
         public TransformSystem(EntityManager em, EntitySystemManager esm)
             : base(em, esm)
         {
@@ -59,107 +62,113 @@ namespace SS14.Client.GameObjects.EntitySystems
             return null;
         }
 
-        public override void Update(float frametime)
-        {
-            var entities = EntityManager.GetEntities(EntityQuery);
+        private void UpdateEntityPosition(Entity entity, float frameTime) {
+            
             //Interp constant -- determines how far back in time to interpolate from
             var interpolation = IoCManager.Resolve<IPlayerConfigurationManager>().GetInterpolation();
+
             Vector2f newPosition;
-            foreach (var entity in entities)
+            
+            //Get transform component
+            var transform = entity.GetComponent<TransformComponent>(ComponentFamily.Transform);
+            //Check if the entity has a keyboard input mover component
+            bool isLocallyControlled = entity.GetComponent<PlayerInputMoverComponent>(ComponentFamily.Mover) != null
+                && IoCManager.Resolve<IPlayerManager>().ControlledEntity == entity;
+
+            //Pretend that the current point in time is actually 100 or more milliseconds in the past depending on the interp constant
+            var currentTime = IoCManager.Resolve<IGameTimer>().CurrentTime - interpolation;
+
+            //Limit to how far a human can move
+            var humanMoveLimit = 6 * interpolation * PlayerInputMoverComponent.FastMoveSpeed;
+
+            // If the "to" interp position is equal to the "from" interp position,
+            // OR we're actually trying to interpolate past the "to" state
+            // OR we're trying to interpolate a point older than the oldest state in memory
+            if (transform.lerpStateTo == transform.lerpStateFrom ||
+                currentTime > transform.lerpStateTo.ReceivedTime ||
+                currentTime < transform.lerpStateFrom.ReceivedTime)
             {
-                //Get transform component
-                var transform = entity.GetComponent<TransformComponent>(ComponentFamily.Transform);
-                //Check if the entity has a keyboard input mover component
-                bool isLocallyControlled = entity.GetComponent<PlayerInputMoverComponent>(ComponentFamily.Mover) != null
-                    && IoCManager.Resolve<IPlayerManager>().ControlledEntity == entity;
+                // Fall back to setting the position to the "To" state
+                newPosition = new Vector2f(transform.lerpStateTo.X, transform.lerpStateTo.Y);
+            }
+            else //OTHERWISE
+            {
+                //Interpolate
 
-                //Pretend that the current point in time is actually 100 or more milliseconds in the past depending on the interp constant
-                var currentTime = IoCManager.Resolve<IGameTimer>().CurrentTime - interpolation;
+                var p1 = new Vector2f(transform.lerpStateFrom.X, transform.lerpStateTo.Y);
+                var p2 = new Vector2f(transform.lerpStateTo.X, transform.lerpStateTo.Y);
+                var t1 = transform.lerpStateFrom.ReceivedTime;
+                var t2 = transform.lerpStateTo.ReceivedTime;
 
-                //Limit to how far a human can move
-                var humanMoveLimit = 6 * interpolation * PlayerInputMoverComponent.FastMoveSpeed;
-
-                // If the "to" interp position is equal to the "from" interp position,
-                // OR we're actually trying to interpolate past the "to" state
-                // OR we're trying to interpolate a point older than the oldest state in memory
-                if (transform.lerpStateTo == transform.lerpStateFrom ||
-                    currentTime > transform.lerpStateTo.ReceivedTime ||
-                    currentTime < transform.lerpStateFrom.ReceivedTime)
-                {
-                    // Fall back to setting the position to the "To" state
-                    newPosition = new Vector2f(transform.lerpStateTo.X, transform.lerpStateTo.Y);
-                }
-                else //OTHERWISE
-                {
-                    //Interpolate
-
-                    var p1 = new Vector2f(transform.lerpStateFrom.X, transform.lerpStateTo.Y);
-                    var p2 = new Vector2f(transform.lerpStateTo.X, transform.lerpStateTo.Y);
-                    var t1 = transform.lerpStateFrom.ReceivedTime;
-                    var t2 = transform.lerpStateTo.ReceivedTime;
-
-                    // linear interpolation from the state immediately prior to the "current time"
-                    // to the state immediately after the "current time"
-                    var lerp = (currentTime - t1)/(t2 - t1);
-                    //lerp is a constant 0..1 value that says what position along the line from p1 to p2 we're at
-                    newPosition = Interpolate(p1, p2, lerp, false);
-                    if(isLocallyControlled)
-                    {
-                        newPosition = EaseExponential(currentTime - t1, transform.Position, newPosition, t2 - t1);
-                    }
-                }
-
-                //Handle player movement
+                // linear interpolation from the state immediately prior to the "current time"
+                // to the state immediately after the "current time"
+                var lerp = (currentTime - t1) / (t2 - t1);
+                //lerp is a constant 0..1 value that says what position along the line from p1 to p2 we're at
+                newPosition = Interpolate(p1, p2, lerp, false);
                 if (isLocallyControlled)
                 {
-                    //var playerPosition = transform.Position +
-                    var velocityComponent = entity.GetComponent<VelocityComponent>(ComponentFamily.Velocity);
-                    if (velocityComponent != null)
-                    {
-                        var movement = velocityComponent.Velocity * frametime;
-                        var playerPosition = movement + transform.Position;
-                        var difference = playerPosition - newPosition;
-                        if (difference.LengthSquared() <= humanMoveLimit * humanMoveLimit)
-                            //TODO do this by reducing the length of the difference vector to the acceptable amount and applying it
-                            //Instead of just snapping back to the server's position
-                            newPosition = playerPosition;
-                    }
-                    // Reduce rubber banding by easing to the position we're supposed to be at
+                    newPosition = EaseExponential(currentTime - t1, transform.Position, newPosition, t2 - t1);
                 }
+            }
 
-                if ((newPosition - transform.Position).LengthSquared() > 0.0000001f)// &&
-                    //(!haskbMover || (newPosition - transform.Position).Length > humanMoveLimit))
+            //Handle player movement
+            if (isLocallyControlled)
+            {
+                //var playerPosition = transform.Position +
+                var velocityComponent = entity.GetComponent<VelocityComponent>(ComponentFamily.Velocity);
+                if (velocityComponent != null)
                 {
-                    var doTranslate = false;
-                    if (!isLocallyControlled)
-                        doTranslate = true;
-                    else
+                    var movement = velocityComponent.Velocity * frameTime;
+                    var playerPosition = movement + transform.Position;
+                    var difference = playerPosition - newPosition;
+                    if (difference.LengthSquared() <= humanMoveLimit * humanMoveLimit)
+                        //TODO do this by reducing the length of the difference vector to the acceptable amount and applying it
+                        //Instead of just snapping back to the server's position
+                        newPosition = playerPosition;
+                }
+                // Reduce rubber banding by easing to the position we're supposed to be at
+            }
+
+            if ((newPosition - transform.Position).LengthSquared() > 0.0000001f)// &&
+                                                                                //(!haskbMover || (newPosition - transform.Position).Length > humanMoveLimit))
+            {
+                var doTranslate = false;
+                if (!isLocallyControlled)
+                    doTranslate = true;
+                else
+                {
+                    //Only for components with a keyboard input mover component, and a collider component
+                    // Check for collision so we don't get shit stuck in objects
+                    if (entity.GetComponent<ColliderComponent>(ComponentFamily.Collider) != null)
                     {
-                        //Only for components with a keyboard input mover component, and a collider component
-                        // Check for collision so we don't get shit stuck in objects
-                        if (entity.GetComponent<ColliderComponent>(ComponentFamily.Collider) != null)
+                        Vector2f? _newPosition = calculateNewPosition(entity, newPosition, transform);
+                        if (_newPosition != null)
                         {
-                            Vector2f? _newPosition = calculateNewPosition(entity, newPosition, transform);
-                            if (_newPosition != null)
-                            {
-                                newPosition = _newPosition.Value;
-                                doTranslate = true;
-                            }
-                        }
-                        else
-                        {
+                            newPosition = _newPosition.Value;
                             doTranslate = true;
                         }
                     }
-                    if (doTranslate)
+                    else
                     {
-                        transform.TranslateTo(newPosition);
-                        if (isLocallyControlled)
-                            entity.GetComponent<PlayerInputMoverComponent>(ComponentFamily.Mover).SendPositionUpdate(newPosition);
-
+                        doTranslate = true;
                     }
                 }
+                if (doTranslate)
+                {
+                    transform.TranslateTo(newPosition);
+                    if (isLocallyControlled)
+                        entity.GetComponent<PlayerInputMoverComponent>(ComponentFamily.Mover).SendPositionUpdate(newPosition);
 
+                }
+            }
+        }
+
+        public override void Update(float frameTime)
+        {
+            var entities = EntityManager.GetEntities(EntityQuery);            
+            foreach (var entity in entities)
+            {
+                UpdateEntityPosition(entity, frameTime);
             }
         }
 

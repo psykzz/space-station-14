@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace SS14.Shared.GameObjects
 {
@@ -94,10 +95,7 @@ namespace SS14.Shared.GameObjects
 
         public void Shutdown()
         {
-            foreach (var system in _systems)
-            {
-                RemoveSystem(system.Value);
-            }
+            Parallel.ForEach(_systems, system => RemoveSystem(system.Value));
             _shutdown = true;
         }
 
@@ -114,10 +112,7 @@ namespace SS14.Shared.GameObjects
 
         public void Update(float frameTime)
         {
-            foreach (EntitySystem system in _systems.Values)
-            {
-                system.Update(frameTime);
-            }
+            Parallel.ForEach(_systems.Values, system => system.Update(frameTime));
         }
     }
 

@@ -3,8 +3,11 @@ using SS14.Shared.GameObjects.System;
 
 namespace SS14.Client.GameObjects.EntitySystems
 {
+
     internal class PhysicsSystem : EntitySystem
     {
+        new private float updateFrequency = 0.1f;
+
         public PhysicsSystem(EntityManager em, EntitySystemManager esm)
             : base(em, esm)
         {

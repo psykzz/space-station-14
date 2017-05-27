@@ -12,6 +12,9 @@ namespace SS14.Shared.GameObjects.System
         private bool _initialized;
         private bool _shutdown;
 
+        protected float updateFrequency = 0.0f;
+        protected float timeSinceLastUpdate = 0.0f;
+
         public EntitySystem(EntityManager em, EntitySystemManager esm)
         {
             EntityManager = em;
@@ -48,6 +51,8 @@ namespace SS14.Shared.GameObjects.System
         }
 
         public virtual void Update(float frameTime)
-        {}
+        {
+            timeSinceLastUpdate += frameTime;
+        }
     }
 }

@@ -2,6 +2,7 @@
 using Lidgren.Network;
 using NetSerializer;
 using SS14.Shared.GameStates;
+using SS14.Shared.Log;
 using SS14.Shared.Serialization;
 using System;
 using System.IO;

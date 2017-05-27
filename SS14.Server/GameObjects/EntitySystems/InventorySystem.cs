@@ -91,6 +91,7 @@ namespace SS14.Server.GameObjects.EntitySystems
         {
             PickUpEntity(args.Actor, args.Item);
         }
+
         public void HandleDropItem(object sender, InventoryDroppedItemEventArgs args)
         {
             //Check to see if the item is actually in a hand

@@ -30,6 +30,7 @@ using System.Collections.Generic;
 using System.Linq;
 using EntityManager = SS14.Client.GameObjects.EntityManager;
 using KeyEventArgs = SFML.Window.KeyEventArgs;
+using SS14.Shared.Log;
 
 namespace SS14.Client.State.States
 {
@@ -408,7 +409,7 @@ namespace SS14.Client.State.States
                 MousePosWorld = CluwneLib.ScreenToWorld(MousePosScreen); // Use WorldCenter to calculate, so we need to update again
             }
         }
-
+        public ILight[] currentLightsCache;
         public void Render(FrameEventArgs e)
         {
             CluwneLib.Screen.Clear(Color.Black);
@@ -422,11 +423,12 @@ namespace SS14.Client.State.States
                 var vp = CluwneLib.WorldViewport;
 
                 // Get nearby lights
-                ILight[] lights = IoCManager.Resolve<ILightManager>().LightsIntersectingRect(vp);
+                var lights = IoCManager.Resolve<ILightManager>().LightsIntersectingRect(vp);
 
                 // Render the lightmap
-            //    RenderLightsIntoMap(lights);
+                RenderLightsIntoMap(lights);
                 CalculateSceneBatches(vp);
+
 
                 //Draw all rendertargets to the scenetarget
                 _sceneTarget.BeginDrawing();
@@ -435,7 +437,6 @@ namespace SS14.Client.State.States
                 //PreOcclusion
                 RenderTiles();
 
-                //ComponentManager.Singleton.Render(0, CluwneLib.ScreenViewport);
                 RenderComponents(e.FrameDeltaTime, vp);
 
                 RenderOverlay();
@@ -443,14 +444,13 @@ namespace SS14.Client.State.States
 
                 _sceneTarget.EndDrawing();
                 _sceneTarget.ResetCurrentRenderTarget();
-                //_sceneTarget.Blit(0, 0, CluwneLib.Screen.Size.X, CluwneLib.Screen.Size.Y);
 
                 //Debug.DebugRendertarget(_sceneTarget);
 
-             //   if (bFullVision)
+                if (bFullVision)
                     _sceneTarget.Blit(0, 0, CluwneLib.Screen.Size.X, CluwneLib.Screen.Size.Y);
-           //     else
-           //         LightScene();
+                else
+                    LightScene();
 
 
                 RenderDebug(vp);
@@ -497,8 +497,6 @@ namespace SS14.Client.State.States
 
                 if (_decalBatch.Count > 0)
                     _overlayTarget.Draw(_decalBatch);
-
-
 
                 if (_gasBatch.Count > 0)
                     _overlayTarget.Draw(_gasBatch);
@@ -967,6 +965,7 @@ namespace SS14.Client.State.States
             //Grab the 'from' state
             GameState fromState = _lastStates[delta.FromSequence];
             //Apply the delta
+            LogManager.Log("Applying delta of size " + delta.Size.ToString());
             GameState newState = fromState + delta;
             newState.GameTime = IoCManager.Resolve<IGameTimer>().CurrentTime;
 
@@ -1107,9 +1106,7 @@ namespace SS14.Client.State.States
             RenderImage desto = shadowIntermediate;
             RenderImage copy = null;
 
-
             Lightmap.setAsCurrentShader();
-
 
             var lightTextures = new List<Texture>();
             var colors = new List<Vector4f>();

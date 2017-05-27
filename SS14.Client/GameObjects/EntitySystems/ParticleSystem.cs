@@ -5,8 +5,10 @@ using SS14.Shared.IoC;
 
 namespace SS14.Client.GameObjects.EntitySystems
 {
-    public class ParticleSystem : EntitySystem
+    internal class ParticleSystem : EntitySystem
     {
+        new private float updateFrequency = 0.1f;
+
         public ParticleSystem(EntityManager em, EntitySystemManager esm)
             : base(em, esm)
         {
@@ -29,9 +31,8 @@ namespace SS14.Client.GameObjects.EntitySystems
             base.RegisterMessageTypes();
         }
 
-        public override void Update(float frametime)
-        {
-        }
+        public override void Update(float frameTime)
+        {}
 
         public override void HandleNetMessage(EntitySystemMessage sysMsg)
         {
